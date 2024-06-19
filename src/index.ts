@@ -13,6 +13,7 @@ interface Submission {
     phone: string;
     github_link: string;
     stopwatch_time: string;
+    timestamp: string;
 }
 
 let submissions: Submission[] = [];
@@ -39,18 +40,25 @@ app.get('/ping', (req: Request, res: Response) => {
     res.json({ success: true });
 });
 
+
 app.post('/submit', (req: Request, res: Response) => {
+    if (submissions.length >= 20) {
+        return res.status(403).json({ error: 'Submission limit reached.' });
+    }
+
     const { name, email, phone, github_link, stopwatch_time } = req.body;
 
     if (!name || !email || !phone || !github_link || !stopwatch_time) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    const newSubmission: Submission = { name, email, phone, github_link, stopwatch_time };
+    const timestamp = new Date().toISOString();
+    const newSubmission: Submission = { name, email, phone, github_link, stopwatch_time, timestamp };
     submissions.push(newSubmission);
     saveSubmissions();
     res.status(201).json({ success: true, submission: newSubmission });
 });
+
 
 app.get('/submissions', (req: Request, res: Response) => {
     res.json(submissions);
@@ -108,7 +116,7 @@ app.put('/edit', (req: Request, res: Response) => {
         return res.status(400).json({ error: 'No fields to update.' });
     }
 
-    submissions[idx] = { ...submissions[idx], ...updatedFields };
+    submissions[idx] = { ...submissions[idx], ...updatedFields, timestamp: new Date().toISOString() };
     saveSubmissions();
     res.json({ success: true, updatedSubmission: submissions[idx] });
 });
