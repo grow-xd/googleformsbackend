@@ -71,7 +71,58 @@ app.get('/read', (req: Request, res: Response) => {
     res.json(submissions[idx]);
 });
 
+app.delete('/delete', (req: Request, res: Response) => {
+    const { index } = req.query;
 
+    if (index === undefined || isNaN(Number(index))) {
+        return res.status(400).json({ error: 'Invalid index.' });
+    }
+
+    const idx = Number(index);
+    if (idx < 0 || idx >= submissions.length) {
+        return res.status(404).json({ error: 'Submission not found.' });
+    }
+
+    const deletedSubmission = submissions.splice(idx, 1)[0];
+    saveSubmissions();
+    res.json({ success: true, deletedSubmission });
+});
+
+
+
+app.put('/edit', (req: Request, res: Response) => {
+    const { index } = req.query;
+
+    if (index === undefined || isNaN(Number(index))) {
+        return res.status(400).json({ error: 'Invalid index.' });
+    }
+
+    const idx = Number(index);
+    if (idx < 0 || idx >= submissions.length) {
+        return res.status(404).json({ error: 'Submission not found.' });
+    }
+
+    const updatedFields = req.body;
+
+    if (Object.keys(updatedFields).length === 0) {
+        return res.status(400).json({ error: 'No fields to update.' });
+    }
+
+    submissions[idx] = { ...submissions[idx], ...updatedFields };
+    saveSubmissions();
+    res.json({ success: true, updatedSubmission: submissions[idx] });
+});
+
+app.get('/submissions/group', (req: Request, res: Response) => {
+    const { email } = req.query;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const submissionsGroup = submissions.filter(submission => submission.email.includes(email as string));
+    res.json(submissionsGroup);
+});
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
